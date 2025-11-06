@@ -1,8 +1,6 @@
 export async function process({ task }: { task: Task }) {
-  const {
-    linearApiKey, // Linear API key from Settings > API
-    linearTeamId, // Team UUID
-  } = secrets as any;
+  const linearApiKey = await zygon.secrets.get("linearApiKey"); // Linear API key from Settings > API
+  const linearTeamId = await zygon.secrets.get("linearTeamId"); // Team UUID
 
   if (!linearApiKey || !linearTeamId) {
     throw new Error("Missing one or more required Linear secrets");

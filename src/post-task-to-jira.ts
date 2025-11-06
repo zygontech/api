@@ -1,14 +1,8 @@
 export async function process({ task }: { task: Task }) {
-  const {
-    jiraBaseUrl, // e.g., https://yourcompany.atlassian.net
-    jiraEmail, // e.g., "bot@yourcompany.com"
-    jiraApiToken, // Atlassian API token
-    jiraProjectKey, // e.g., "OPS"
-  } = secrets;
-
-  if (!jiraBaseUrl || !jiraEmail || !jiraApiToken || !jiraProjectKey) {
-    throw new Error("Missing one or more required Jira secrets");
-  }
+  const jiraBaseUrl = await zygon.secrets.get("jiraBaseUrl"); // e.g., https://yourcompany.atlassian.net
+  const jiraEmail = await zygon.secrets.get("jiraEmail"); // e.g., "bot@yourcompany.com"
+  const jiraApiToken = await zygon.secrets.get("jiraApiToken"); // Atlassian API token
+  const jiraProjectKey = await zygon.secrets.get("jiraProjectKey"); // e.g., "OPS"
 
   // Make the POST request to Jira REST API
   const response = await zygon.fetch({
