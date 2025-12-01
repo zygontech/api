@@ -83,7 +83,7 @@ export async function process({ account }: { account: Account }) {
     await zygon.user.notify({
       userIds: [account.collaboratorId],
       subject: `Access request denied by ${approver.fullName} (${approverRole})`,
-      message: `Your request for ${account.roles.join(", ")} role in ${app.name} has been denied.`,
+      message: `Your request for ${account.roles.join(", ")} in ${app.name} has been denied.`,
     });
 
     return {
