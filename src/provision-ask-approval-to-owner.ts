@@ -1,4 +1,10 @@
-export async function process({ account }: { account: Account }) {
+export async function process({
+  zygon,
+  account,
+}: {
+  zygon: Zygon;
+  account: Account;
+}) {
   const owners = await zygon.app.getOwners({ appId: account.appInstanceId });
   const primaryOwner = owners.find((o) => o.order === 0)?.owner;
 

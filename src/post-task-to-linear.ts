@@ -1,4 +1,4 @@
-export async function process({ task }: { task: Task }) {
+export async function process({ zygon, task }: { zygon: Zygon; task: Task }) {
   const linearApiKey = await zygon.variable.getByName({ name: "linearApiKey" }); // Linear API key from Settings > API
   const linearTeamId = await zygon.variable.getByName({ name: "linearTeamId" }); // Team UUID
 

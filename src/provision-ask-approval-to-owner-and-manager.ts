@@ -1,6 +1,14 @@
-export async function process({ account }: { account: Account }) {
-  // Get user and app details
-  const user = await zygon.user.getById({ id: account.collaboratorId });
+export async function process({
+  zygon,
+  account,
+  user,
+  app,
+}: {
+  zygon: Zygon;
+  account: Account;
+  user: User;
+  app: App;
+}) {
   const owners = await zygon.app.getOwners({ appId: account.appInstanceId });
   const primaryOwner = owners.find((o) => o.order === 0)?.owner;
 
@@ -11,8 +19,8 @@ export async function process({ account }: { account: Account }) {
 
   // User's direct manager
   if (user.zygonManagerId) {
-    const manager = await zygon.user.getById({ id: user.zygonManagerId });
-    if (manager.status === "active") {
+    const manager = await zygon.user.getFirst({ id: user.zygonManagerId });
+    if (manager && manager.status === "active") {
       approvers.manager = {
         id: manager.id,
         name: manager.fullName,
@@ -73,8 +81,6 @@ export async function process({ account }: { account: Account }) {
       todoId: task.id,
     }),
   ]);
-
-  const app = await zygon.app.getById({ id: account.appInstanceId });
 
   // Check if EITHER denied
   const deniedApproval = [managerApproval, ownerApproval].find(

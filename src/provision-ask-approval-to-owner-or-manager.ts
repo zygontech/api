@@ -1,6 +1,12 @@
-export async function process({ account }: { account: Account }) {
-  // Get user and app details
-  const user = await zygon.user.getById({ id: account.collaboratorId });
+export async function process({
+  zygon,
+  account,
+  user,
+}: {
+  zygon: Zygon;
+  account: Account;
+  user: User;
+}) {
   const owners = await zygon.app.getOwners({ appId: account.appInstanceId });
   const primaryOwner = owners.find((o) => o.order === 0)?.owner;
 
@@ -8,8 +14,8 @@ export async function process({ account }: { account: Account }) {
 
   // User's direct manager
   if (user.zygonManagerId) {
-    const manager = await zygon.user.getById({ id: user.zygonManagerId });
-    if (manager.status === "active") {
+    const manager = await zygon.user.getFirst({ id: user.zygonManagerId });
+    if (manager && manager.status === "active") {
       approvers.push({
         id: manager.id,
         name: manager.fullName,
@@ -67,11 +73,16 @@ export async function process({ account }: { account: Account }) {
   // Wait for FIRST response (approval or denial)
   const approval = await Promise.race(approvalPromises);
 
-  const app = await zygon.app.getById({ id: account.appInstanceId });
-  const approver = await zygon.user.getById({ id: approval.approverId });
+  const app = await zygon.app.getFirst({ id: account.appInstanceId });
+  if (!app) return;
+
+  const approver = await zygon.user.getFirst({ id: approval.approverId });
+  if (!approver) return;
+
   const approverRole = approvers.find(
     (a) => a.id === approval.approverId,
   )?.role;
+
   if (approval.status === "Denied") {
     // Reject the account
     await zygon.account.update({

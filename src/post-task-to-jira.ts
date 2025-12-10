@@ -1,4 +1,4 @@
-export async function process({ task }: { task: Task }) {
+export async function process({ zygon, task }: { zygon: Zygon; task: Task }) {
   const jiraBaseUrl = await zygon.variable.getByName({ name: "jiraBaseUrl" }); // e.g., https://yourcompany.atlassian.net
   const jiraEmail = await zygon.variable.getByName({ name: "jiraEmail" }); // e.g., "bot@yourcompany.com"
   const jiraApiToken = await zygon.variable.getByName({ name: "jiraApiToken" }); // Atlassian API token
