@@ -1,22 +1,24 @@
 export async function process({
   zygon,
-  account,
-  user,
+  task,
+  target,
+  assignee,
   app,
   doer,
 }: {
   zygon: Zygon;
-  account: Account;
-  user: User;
+  task: Task;
+  target: User;
+  assignee: User;
   app: App;
   doer: Doer;
 }) {
-  if (!user.zygonManagerId) return;
+  if (!target.zygonManagerId) return;
 
   // notify manager
   await zygon.user.notify({
-    userIds: [user.zygonManagerId],
+    userIds: [target.zygonManagerId],
     subject: "access deny",
-    message: `${user.primaryEmail} asked to access app ${app.name}`,
+    message: `${target.primaryEmail} asked to access app ${app.name}`,
   });
 }

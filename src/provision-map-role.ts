@@ -1,17 +1,29 @@
 export async function process({
   zygon,
-  account,
-  user,
+  task,
+  target,
+  assignee,
   app,
   doer,
 }: {
   zygon: Zygon;
-  account: Account;
-  user: User;
+  task: Task;
+  target: User;
+  assignee: User;
   app: App;
   doer: Doer;
 }) {
   // write your custom logic here to map roles
-  const roles = user.role === "admin" ? ["admin"] : ["regular"];
+  const roles = target.role === "admin" ? ["admin"] : ["regular"];
+
+  const { appInstanceId, targetId } = task;
+
+  if (!appInstanceId || !targetId) return;
+
+  const account = await zygon.account.getFirst({
+    appInstanceId,
+    collaboratorId: targetId,
+  });
+
   await zygon.account.update({ id: account.id, roles });
 }

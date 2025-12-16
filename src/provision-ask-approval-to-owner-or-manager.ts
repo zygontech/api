@@ -1,20 +1,26 @@
 export async function process({
   zygon,
-  account,
-  user,
+  task,
+  target,
+  assignee,
+  app,
+  doer,
 }: {
   zygon: Zygon;
-  account: Account;
-  user: User;
+  task: Task;
+  target: User;
+  assignee: User;
+  app: App;
+  doer: Doer;
 }) {
-  const owners = await zygon.app.getOwners({ appId: account.appInstanceId });
+  const owners = await zygon.app.getOwners({ appId: app.id });
   const primaryOwner = owners.find((o) => o.order === 0)?.owner;
 
   const approvers = [];
 
   // User's direct manager
-  if (user.zygonManagerId) {
-    const manager = await zygon.user.getFirst({ id: user.zygonManagerId });
+  if (target.zygonManagerId) {
+    const manager = await zygon.user.getFirst({ id: target.zygonManagerId });
     if (manager && manager.status === "active") {
       approvers.push({
         id: manager.id,
@@ -35,13 +41,8 @@ export async function process({
 
   // If no approvers, auto-deny
   if (approvers.length === 0) {
-    await zygon.account.update({
-      id: account.id,
-      status: "notExisting",
-    });
-
     await zygon.user.notify({
-      userIds: [account.collaboratorId],
+      userIds: [target.id],
       subject: "Access request automatically denied",
       message: "No active approvers available. Please contact IT support.",
     });
@@ -51,16 +52,6 @@ export async function process({
       reason: "No active approvers available",
     };
   }
-
-  // Create task
-  const task = await zygon.task.create({
-    status: "Pending",
-    type: "CreateAppAccount",
-    appInstanceId: account.appInstanceId,
-    targetId: account.collaboratorId,
-    assigneeId: approvers[0].id,
-    roles: account.roles,
-  });
 
   // Request approval from all available approvers (race condition)
   const approvalPromises = approvers.map((approver) =>
@@ -73,9 +64,6 @@ export async function process({
   // Wait for FIRST response (approval or denial)
   const approval = await Promise.race(approvalPromises);
 
-  const app = await zygon.app.getFirst({ id: account.appInstanceId });
-  if (!app) return;
-
   const approver = await zygon.user.getFirst({ id: approval.approverId });
   if (!approver) return;
 
@@ -84,17 +72,11 @@ export async function process({
   )?.role;
 
   if (approval.status === "Denied") {
-    // Reject the account
-    await zygon.account.update({
-      id: account.id,
-      status: "notExisting",
-    });
-
     // Notify user about denial
     await zygon.user.notify({
-      userIds: [account.collaboratorId],
+      userIds: [target.id],
       subject: `Access request denied by ${approver.fullName} (${approverRole})`,
-      message: `Your request for ${account.roles.join(", ")} in ${app.name} has been denied.`,
+      message: `Your request for ${task.roles.join(", ")} in ${app.name} has been denied.`,
     });
 
     return {
@@ -105,6 +87,16 @@ export async function process({
   }
 
   // If we reach here, it was validated
+  const { appInstanceId, targetId } = task;
+
+  if (!appInstanceId || !targetId) return;
+
+  await zygon.account.upsert({
+    appInstanceId,
+    collaboratorId: targetId,
+    status: "active",
+  });
+
   return {
     approved: true,
     approvedBy: approval.approverId,

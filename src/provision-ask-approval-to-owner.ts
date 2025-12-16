@@ -1,23 +1,22 @@
 export async function process({
   zygon,
-  account,
+  task,
+  target,
+  assignee,
+  app,
+  doer,
 }: {
   zygon: Zygon;
-  account: Account;
+  task: Task;
+  target: User;
+  assignee: User;
+  app: App;
+  doer: Doer;
 }) {
-  const owners = await zygon.app.getOwners({ appId: account.appInstanceId });
+  const owners = await zygon.app.getOwners({ appId: app.id });
   const primaryOwner = owners.find((o) => o.order === 0)?.owner;
 
   if (!primaryOwner) return;
-
-  const task = await zygon.task.create({
-    status: "Pending",
-    type: "CreateAppAccount",
-    appInstanceId: account.appInstanceId,
-    targetId: account.collaboratorId,
-    assigneeId: primaryOwner.id,
-    roles: account.roles,
-  });
 
   const approval = await zygon.approval.ask({
     approverId: primaryOwner.id,
@@ -25,14 +24,20 @@ export async function process({
   });
 
   if (approval.status === "Denied") {
-    await zygon.account.update({
-      id: account.id,
-      status: "notExisting",
-    });
     await zygon.user.notify({
       userIds: [task.targetId!],
       subject: `Your access request has been rejected by ${primaryOwner.fullName}`,
       message: "",
     });
   }
+
+  const { appInstanceId, targetId } = task;
+
+  if (!appInstanceId || !targetId) return;
+
+  await zygon.account.upsert({
+    appInstanceId,
+    collaboratorId: targetId,
+    status: "active",
+  });
 }
