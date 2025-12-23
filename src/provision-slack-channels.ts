@@ -1,7 +1,7 @@
 /*
 Here's a script to invite users to a set of default channels on Slack
 */
-export async function process({ user }: { user: User }) {
+export async function process({ zygon, user }: { zygon: Zygon; user: User }) {
   // user needs to be an existing slack user (run slack provisioning first and run slack sync first)
   if (!user.slackUserId) {
     return;
