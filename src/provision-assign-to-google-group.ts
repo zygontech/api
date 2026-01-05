@@ -1,4 +1,4 @@
-export async function process({ user }: { user: User }) {
+export async function process({ zygon, user }: { zygon: Zygon; user: User }) {
   if (!user.googleId || !user.googleOrgUnitPath) return;
   // Define the orgUnit to Google group email mapping
   const orgUnitToGroup = {

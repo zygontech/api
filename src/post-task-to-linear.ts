@@ -1,10 +1,8 @@
-export async function process({ task }: { task: Task }) {
-  const {
-    linearApiKey, // Linear API key from Settings > API
-    linearTeamId, // Team UUID
-  } = secrets as any;
+export async function process({ zygon, task }: { zygon: Zygon; task: Task }) {
+  const linearApiKey = await zygon.variable.getByName({ name: "linearApiKey" }); // Linear API key from Settings > API
+  const linearTeamId = await zygon.variable.getByName({ name: "linearTeamId" }); // Team UUID
 
-  if (!linearApiKey || !linearTeamId) {
+  if (!linearApiKey.value || !linearTeamId.value) {
     throw new Error("Missing one or more required Linear secrets");
   }
 
@@ -24,7 +22,7 @@ export async function process({ task }: { task: Task }) {
 
   const variables = {
     input: {
-      teamId: linearTeamId,
+      teamId: linearTeamId.value,
       title: task.title || `Zygon Task ${task.id}`,
       description:
         task.description ||
@@ -39,7 +37,7 @@ export async function process({ task }: { task: Task }) {
     options: {
       method: "POST",
       headers: {
-        Authorization: linearApiKey,
+        Authorization: linearApiKey.value,
         "Content-Type": "application/json",
       },
       body: {
