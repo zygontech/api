@@ -1,24 +1,28 @@
-export async function process({ zygon, task }: { zygon: Zygon; task: Task }) {
-  const jiraBaseUrl = await zygon.variable.getByName({ name: "jiraBaseUrl" }); // e.g., https://yourcompany.atlassian.net
-  const jiraEmail = await zygon.variable.getByName({ name: "jiraEmail" }); // e.g., "bot@yourcompany.com"
-  const jiraApiToken = await zygon.variable.getByName({ name: "jiraApiToken" }); // Atlassian API token
-  const jiraProjectKey = await zygon.variable.getByName({
-    name: "jiraProjectKey",
-  }); // e.g., "OPS"
+export async function process({ task }: { task: Task }) {
+  const {
+    jiraBaseUrl, // e.g., https://yourcompany.atlassian.net
+    jiraEmail, // e.g., "bot@yourcompany.com"
+    jiraApiToken, // Atlassian API token
+    jiraProjectKey, // e.g., "OPS"
+  } = secrets;
+
+  if (!jiraBaseUrl || !jiraEmail || !jiraApiToken || !jiraProjectKey) {
+    throw new Error("Missing one or more required Jira secrets");
+  }
 
   // Make the POST request to Jira REST API
   const response = await zygon.fetch({
-    url: `${jiraBaseUrl.value}/rest/api/3/issue`,
+    url: `${jiraBaseUrl}/rest/api/3/issue`,
     options: {
       method: "POST",
       headers: {
-        Authorization: `Basic ${btoa(`${jiraEmail.value}:${jiraApiToken.value}`)}`,
+        Authorization: `Basic ${btoa(`${jiraEmail}:${jiraApiToken}`)}`,
         "Content-Type": "application/json",
         Accept: "application/json",
       },
       body: {
         fields: {
-          project: { key: jiraProjectKey.value },
+          project: { key: jiraProjectKey },
           summary: task.title || `Zygon Task ${task.id}`,
           description: {
             type: "doc",

@@ -1,4 +1,4 @@
-export async function process({ zygon, user }: { zygon: Zygon; user: User }) {
+export async function process({ user }: { user: User }) {
   // Stop here if the user has no Lucca ID
   if (!user.luccaUserId) return;
 
